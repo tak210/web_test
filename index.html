@@ -1,30 +1,96 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebAR with AR.js and GLTF Model</title>
-	<script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-	<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-	
-    <style>
-        body { margin: 0; }
-        a-entity { position: absolute; }
-    </style>
+    <meta charset="utf-8">
+    <title>A-Frame WebXR Hit Test</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <!-- ヒットテスト用のカスタムコンポーネント -->
+    <script>
+        AFRAME.registerComponent('hit-test', {
+            init: function () {
+                this.hitTestSource = null;
+                this.reticle = document.querySelector('#reticle');
+                this.modelTemplate = document.querySelector('#model-template');
+
+                // WebXRセッションが開始されたらヒットテストソースを取得
+                this.el.addEventListener('xrsessionstart', (evt) => {
+                    const session = evt.detail.session;
+                    session.requestReferenceSpace('viewer').then((referenceSpace) => {
+                        session.requestHitTestSource({ space: referenceSpace }).then((source) => {
+                            this.hitTestSource = source;
+                        });
+                    });
+                });
+
+                // 毎フレームの更新処理（レティクルの移動）
+                this.el.addEventListener('tick', () => {
+                    if (this.hitTestSource && this.reticle) {
+                        const frame = this.el.sceneEl.frame;
+                        const hitResults = frame.getHitTestResults(this.hitTestSource);
+
+                        if (hitResults.length > 0) {
+                            const hit = hitResults[0];
+                            // レティクルの位置を更新
+                            const newPos = hit.getPose().transform.position;
+                            this.reticle.setAttribute('position', `${newPos.x} ${newPos.y} ${newPos.z}`);
+                            this.reticle.setAttribute('visible', 'true');
+                        } else {
+                            this.reticle.setAttribute('visible', 'false');
+                        }
+                    }
+                });
+
+                // タップ（クリック）した時の処理
+                this.el.addEventListener('click', () => {
+                    if (this.reticle && this.reticle.getAttribute('visible')) {
+                        const pos = this.reticle.getAttribute('position');
+                        
+                        // モデルを複製して配置
+                        const newModel = this.modelTemplate.cloneNode(true);
+                        newModel.setAttribute('position', pos);
+                        // テンプレートのIDを削除（重複防止）
+                        newModel.removeAttribute('id');
+                        
+                        this.el.sceneEl.appendChild(newModel);
+                    }
+                });
+            }
+        });
+    </script>
 </head>
 <body>
-    <a-scene embedded arjs>
-        <!-- AR オブジェクトを配置する場所 -->
-        <a-marker type="pattern" url="assets/marker.patt">
-            <!-- GLTF モデルの表示 -->
-            <a-entity gltf-model="url(./monkey.glb)" scale="2.0 2.0 2.0" position='0 0 -2'></a-entity>
-        </a-marker>
+    <!-- 
+      webxr="optional: hit-test" を指定することで、
+      平面検知（Hit Test）が可能なセッションを要求します。
+    -->
+    <a-scene webxr="optional: hit-test" hit-test>
+        
+        <a-assets>
+            <!-- ここに3Dモデルのパスを入れる（現在は簡易的な箱を表示） -->
+            <!-- <a-asset-item id="myModel" src="model.glb"></a-asset-item> -->
+        </a-assets>
 
-        <!-- カメラ設定 -->
-		<!--
-        <a-camera></a-camera>
-		-->
-		<a-entity camera id='camera' />
+        <!-- 環境設定 -->
+        <a-sky color="#ECECEC"></a-sky>
+        <a-entity light="type: ambient; intensity: 1"></a-entity>
+        <a-entity light="type: directional; intensity: 0.8" position="-1 2 1"></a-entity>
+
+        <!-- レティクル（タップした場所を示す円） -->
+        <a-entity id="reticle" 
+                  geometry="primitive: ring; radiusInner: 0.05; radiusOuter: 0.06"
+                  material="color: red; side: double"
+                  visible="false">
+        </a-entity>
+
+        <!-- 配置されるモデルのテンプレート（最初は非表示） -->
+        <a-entity id="model-template" visible="false">
+            <!-- ここを実際の3Dモデル(gltf-model)に置き換える -->
+            <a-box position="0 0.5 0" scale="0.2 0.2 0.2" color="blue"></a-box>
+        </a-entity>
+
+        <a-camera>
+            <a-cursor></a-cursor>
+        </a-camera>
     </a-scene>
 </body>
 </html>
