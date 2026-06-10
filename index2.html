@@ -1,56 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>A-Frame AR Example</title>
-    
-    <!-- A-Frame -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    
-    <!-- A-Frame Extras (必須) -->
-    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
-    
-    <!-- A-Frame AR (AR 機能を追加する重要なライブラリ) -->
-    <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-ar.js@8.1.0/build/aframe-ar.js"></script>
 </head>
-<body style="margin: 0; overflow: hidden;">
-
-    <!-- embedded 属性と ar-mode: true を追加 -->
-    <!-- webxr="optional: hit-test" は AR 用ライブラリが自動で処理するため、省略または調整可能 -->
-    <a-scene 
-        embedded 
-        webxr="optional: hit-test; required: local-floor"
-        vr-mode-ui="enabled: false"
-        ar-mode="true">
-        
-        <!-- AR を開始するためのボタンを表示 -->
-        <a-entity id="ar-button" 
-                  position="0 0 -2" 
-                  geometry="primitive: circle; radius: 0.1" 
-                  material="color: red; opacity: 0.7"
-                  text="value: Tap to Start AR; align: center; width: 2"
-                  cursor="rayOrigin: mouse"
-                  raycaster="objects: .clickable"
-                  class="clickable">
-        </a-entity>
-
-        <a-box position="0 1 -3" color="blue" animation="property: position; to: 0 1.5 -3; dir: alternate; dur: 1000; loop: true"></a-box>
-        
-        <!-- カメラ映像が自動で背景として表示されます -->
+<body>
+    <!-- hit-testを外した、最もシンプルなARシーン -->
+    <a-scene webxr="optional: hit-test">
+        <a-sky color="#ECECEC"></a-sky>
+        <a-box position="0 1 -2" color="red"></a-box>
     </a-scene>
-
-    <script>
-        // AR モード開始時の処理（A-Frame AR ライブラリが自動で処理してくれますが、
-        // 必要に応じて enterVR を AR モードで呼び出す制御ができます）
-        const scene = document.querySelector('a-scene');
-        const arButton = document.querySelector('#ar-button');
-
-        arButton.addEventListener('click', () => {
-            // AR モードで VR を開始
-            if (scene.enterVR) {
-                scene.enterVR();
-            }
-        });
-    </script>
 </body>
 </html>
