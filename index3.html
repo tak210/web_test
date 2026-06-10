@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <title>A-Frame WebAR HitTest</title>
+
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+</head>
+
+<body>
+<a-scene
+    renderer="colorManagement:true; physicallyCorrectLights:true;"
+    xr-mode-ui="enabled: true"
+    webxr="requiredFeatures: hit-test,local-floor">
+
+    <!-- Assets -->
+    <a-assets>
+        <a-asset-item
+            id="model"
+            src="./model.glb">
+        </a-asset-item>
+    </a-assets>
+
+    <!-- Camera -->
+    <a-camera position="0 1.6 0"></a-camera>
+
+    <!-- Light -->
+    <a-entity light="type:ambient; intensity:1"></a-entity>
+
+    <!-- Hit Test Cursor -->
+    <a-ring
+        id="reticle"
+        visible="false"
+        rotation="-90 0 0"
+        radius-inner="0.08"
+        radius-outer="0.1"
+        color="#00FF00">
+    </a-ring>
+
+    <!-- AR Controller -->
+    <a-entity ar-hit-test></a-entity>
+
+</a-scene>
+
+<script>
+AFRAME.registerComponent('ar-hit-test', {
+
+    init() {
+
+        this.sceneEl = this.el.sceneEl;
+        this.reticle = document.querySelector('#reticle');
+
+        this.viewerSpace = null;
+        this.hitTestSource = null;
+        this.refSpace = null;
+        this.xrSession = null;
+
+        this.modelPlaced = false;
+
+        this.sceneEl.renderer.xr.addEventListener(
+            'sessionstart',
+            this.onSessionStart.bind(this)
+        );
+
+        window.addEventListener(
+            'click',
+            this.placeModel.bind(this)
+        );
+    },
+
+    async onSessionStart() {
+
+        const xr = this.sceneEl.renderer.xr;
+
+        this.xrSession = xr.getSession();
+
+        this.viewerSpace =
+            await this.xrSession.requestReferenceSpace(
+                'viewer'
+            );
+
+        this.refSpace =
+            xr.getReferenceSpace();
+
+        this.hitTestSource =
+            await this.xrSession.requestHitTestSource({
+                space: this.viewerSpace
+            });
+    },
+
+    tick() {
+
+        if (!this.hitTestSource) return;
+
+        const xr = this.sceneEl.renderer.xr;
+        const frame = xr.getFrame();
+
+        if (!frame) return;
+
+        const hits =
+            frame.getHitTestResults(
+                this.hitTestSource
+            );
+
+        if (hits.length > 0) {
+
+            const hit = hits[0];
+
+            const pose =
+                hit.getPose(this.refSpace);
+
+            const pos =
+                pose.transform.position;
+
+            this.reticle.object3D.visible = true;
+
+            this.reticle.object3D.position.set(
+                pos.x,
+                pos.y,
+                pos.z
+            );
+
+        } else {
+
+            this.reticle.object3D.visible = false;
+        }
+    },
+
+    placeModel() {
+
+        if (!this.reticle.object3D.visible) return;
+
+        const model =
+            document.createElement('a-gltf-model');
+
+        model.setAttribute(
+            'src',
+            '#model'
+        );
+
+        model.setAttribute(
+            'position',
+            `${this.reticle.object3D.position.x}
+             ${this.reticle.object3D.position.y}
+             ${this.reticle.object3D.position.z}`
+        );
+
+        model.setAttribute(
+            'scale',
+            '0.3 0.3 0.3'
+        );
+
+        model.setAttribute(
+            'rotation',
+            '0 0 0'
+        );
+
+        this.sceneEl.appendChild(model);
+    }
+});
+</script>
+
+</body>
+</html>
