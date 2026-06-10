@@ -1,12 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <!-- A-Frame の読み込み -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <!-- AR 機能を追加するためのライブラリ（推奨） -->
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
 </head>
 <body>
-    <!-- hit-testを外した、最もシンプルなARシーン -->
-    <a-scene webxr="optional: hit-test">
+    <!-- embedded 属性を追加し、webxr のセットアップを簡略化 -->
+    <a-scene embedded webxr="optional: hit-test; required: local-floor">
+        <a-sky color="#ECECEC"></a-sky>
         <a-box position="0 1 -2" color="red"></a-box>
     </a-scene>
+    
+    <!-- AR ボタンの表示（ユーザーが AR を開始するためのトリガー） -->
+    <button id="ar-button">AR を開始</button>
+    
+    <script>
+        const scene = document.querySelector('a-scene');
+        const button = document.getElementById('ar-button');
+
+        // AR モードで開始するための簡易スクリプト
+        // ※実際の implementation はブラウザの対応状況によります
+        button.addEventListener('click', () => {
+            if (scene.enterVR) {
+                // 多くの AR ブラウザでは enterVR が AR モードも起動します
+                scene.enterVR();
+            } else {
+                alert('このブラウザは WebXR AR モードをサポートしていません。');
+            }
+        });
+    </script>
 </body>
 </html>
