@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAR with AR.js and GLTF Model</title>
+	<script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+	<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+	
+    <style>
+        body { margin: 0; }
+        a-entity { position: absolute; }
+    </style>
+</head>
+<body>
+    <a-scene embedded arjs>
+        <!-- AR オブジェクトを配置する場所 -->
+        <a-marker type="pattern" url="assets/marker.patt">
+            <!-- GLTF モデルの表示 -->
+            <a-entity gltf-model="url(./monkey.glb)" scale="2.0 2.0 2.0" position='0 0 -2'></a-entity>
+        </a-marker>
+
+        <!-- カメラ設定 -->
+		<!--
+        <a-camera></a-camera>
+		-->
+		<a-entity camera id='camera' />
+    </a-scene>
+</body>
+</html>
